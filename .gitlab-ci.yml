@@ -1,40 +1,73 @@
-name: CI/CD Pipeline
+# name: CI/CD Pipeline
 
-on:
-  push:
-    branches:
-      - main
+# on:
+#   push:
+#     branches:
+#       - main
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+#     steps:
+#     - name: Checkout code
+#       uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
+#     - name: Set up Python
+#       uses: actions/setup-python@v2
+#       with:
+#         python-version: 3.9
 
-    - name: Build Docker image
-      run: docker build -t myapp .
+#     - name: Build Docker image
+#       run: docker build -t myapp .
 
-    - name: Test Python code
-      run: |
-        pip install -r requirements.txt
-        python -m pytest
+#     - name: Test Python code
+#       run: |
+#         pip install -r requirements.txt
+#         python -m pytest
 
-    - name: Run Robot Framework tests
-      run: |
-        pip install robotframework
-        robot your_robot_tests.robot
+#     - name: Run Robot Framework tests
+#       run: |
+#         pip install robotframework
+#         robot your_robot_tests.robot
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
+#   deploy:
+#     needs: build
+#     runs-on: ubuntu-latest
 
-    steps:
-    - name: Deploy to production
-      # Add your deployment steps here
+#     steps:
+#     - name: Deploy to production
+#       # Add your deployment steps here
+
+
+variables:
+  IMAGE_NAME: shoseinzzz/demo-app
+  IMAGE_TAG:  python-app-0.1
+
+stages:
+  - test
+  - build
+  # - deploy
+
+run_tests:
+  stage: test
+  image: python:3.9-slim-buster
+  before_script:
+    - pip install robotframework
+  script:
+    - robot api_test.robot
+
+
+
+build_image:
+  stage:  build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker login -u $REGESTRY_USER -p $REGESTRY_PASS
+  scripts:
+    - docker build -t $IMAGE_NAME:$IMAGE_TAG .
+    - docker push $IMAGE_NAME:$IMAGE_TAG 
