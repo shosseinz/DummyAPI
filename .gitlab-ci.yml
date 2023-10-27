@@ -1,0 +1,40 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Build Docker image
+      run: docker build -t myapp .
+
+    - name: Test Python code
+      run: |
+        pip install -r requirements.txt
+        python -m pytest
+
+    - name: Run Robot Framework tests
+      run: |
+        pip install robotframework
+        robot your_robot_tests.robot
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Deploy to production
+      # Add your deployment steps here
